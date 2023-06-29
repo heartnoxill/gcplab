@@ -1,0 +1,105 @@
+Task 5. Defining the workflow
+
+DummyOperator: Creates Start and End dummy tasks for better visual representation of the DAG.
+
+BigQueryToCloudStorageOperator: Exports BigQuery tables to Cloud Storage buckets using Avro format.
+
+GoogleCloudStorageToGoogleCloudStorageOperator: Copies files across Cloud Storage buckets.
+
+GoogleCloudStorageToBigQueryOperator: Imports tables from Avro files in Cloud Storage bucket.
+
+# --------------------------------------------------------------------------------
+# Functions
+# --------------------------------------------------------------------------------
+def read_table_list(table_list_file):
+    """
+    Reads the master CSV file that will help in creating Airflow tasks in
+    the DAG dynamically.
+    :param table_list_file: (String) The file location of the master file,
+    e.g. '/home/airflow/framework/master.csv'
+    :return master_record_all: (List) List of Python dictionaries containing
+    the information for a single row in master CSV file.
+    """
+    master_record_all = []
+    logger.info('Reading table_list_file from : %s' % str(table_list_file))
+    try:
+        with open(table_list_file, 'rb') as csv_file:
+            csv_reader = csv.reader(csv_file)
+            next(csv_reader)  # skip the headers
+            for row in csv_reader:
+                logger.info(row)
+                master_record = {
+                    'table_source': row[0],
+                    'table_dest': row[1]
+                }
+                master_record_all.append(master_record)
+            return master_record_all
+    except IOError as e:
+        logger.error('Error opening table_list_file %s: ' % str(
+            table_list_file), e)
+
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime.today(),
+    'depends_on_past': False,
+    'email': [''],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+# DAG object.
+with models.DAG('bq_copy_us_to_eu_01',
+                default_args=default_args,
+                schedule_interval=None) as dag:
+
+# Import operator from plugins
+from gcs_plugin.operators import gcs_to_gcs
+
+Task 6. Viewing environment information
+
+sudo apt-get install -y virtualenv
+python3 -m venv venv
+source venv/bin/activate
+
+Task 7. Setting DAGs Cloud Storage bucket
+
+Make sure to replace your DAGs bucket name in the following command. Navigate to Navigation menu > Cloud Storage, it will be similar to us-east1-composer-advanced-YOURDAGSBUCKET-bucket.
+
+DAGS_BUCKET=<your DAGs bucket name>
+
+Task 8. Setting Airflow variables
+
+//example
+gcloud composer environments run ENVIRONMENT_NAME \
+--location LOCATION variables -- \
+set KEY VALUE
+
+//replace with id from task 2
+gcloud composer environments run composer-advanced-lab \
+--location us-east1 variables -- \
+set table_list_file_path /home/airflow/gcs/dags/bq_copy_eu_to_us_sample.csv
+gcloud composer environments run composer-advanced-lab \
+--location us-east1 variables -- \
+set gcs_source_bucket {UNIQUE ID}-us
+gcloud composer environments run composer-advanced-lab \
+--location us-east1 variables -- \
+set gcs_dest_bucket {UNIQUE_ID}-eu
+
+//example
+gcloud composer environments run composer-advanced-lab \
+    --location us-east1 variables -- \
+    get gcs_source_bucket
+
+Task 9. Uploading the DAG and dependencies to Cloud Storage
+
+cd ~
+gsutil -m cp -r gs://spls/gsp283/python-docs-samples .
+
+gsutil cp -r python-docs-samples/third_party/apache-airflow/plugins/* gs://$DAGS_BUCKET/plugins
+
+gsutil cp python-docs-samples/composer/workflows/bq_copy_across_locations.py gs://$DAGS_BUCKET/dags
+gsutil cp python-docs-samples/composer/workflows/bq_copy_eu_to_us_sample.csv gs://$DAGS_BUCKET/dags
+
+
+
