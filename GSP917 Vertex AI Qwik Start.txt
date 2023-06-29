@@ -33,6 +33,9 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member=serviceAccount:$SERVICE_ACCOUNT_ID@$PROJECT_ID.iam.gserviceaccount.com \
     --role="roles/aiplatform.user"
 
+//clone repo
+git clone https://github.com/GoogleCloudPlatform/training-data-analyst
+
 Task 5. Install lab dependencies
 
 cd training-data-analyst/self-paced-labs/vertex-ai/vertex-ai-qwikstart
