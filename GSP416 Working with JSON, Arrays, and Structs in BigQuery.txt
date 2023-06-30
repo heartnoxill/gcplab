@@ -1,0 +1,60 @@
+Task 3. Creating your own arrays with ARRAY_AGG()
+
+#use the ARRAY_AGG() function to aggregate our string values into an array.
+#use the ARRAY_LENGTH() function to count the number of pages and products that were viewed
+SELECT
+  fullVisitorId,
+  date,
+  ARRAY_AGG(DISTINCT v2ProductName) AS products_viewed,
+  ARRAY_LENGTH(ARRAY_AGG(DISTINCT v2ProductName)) AS distinct_products_viewed,
+  ARRAY_AGG(DISTINCT pageTitle) AS pages_viewed,
+  ARRAY_LENGTH(ARRAY_AGG(DISTINCT pageTitle)) AS distinct_pages_viewed
+  FROM `data-to-insights.ecommerce.all_sessions`
+WHERE visitId = 1501570398
+GROUP BY fullVisitorId, date
+ORDER BY date
+
+Task 4. Querying datasets that already have arrays
+
+#You need to UNNEST() arrays to bring the array elements back into rows
+#UNNEST() always follows the table name in your FROM clause (think of it conceptually like a pre-joined table)
+
+SELECT DISTINCT
+  visitId,
+  h.page.pageTitle
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20170801`,
+UNNEST(hits) AS h
+WHERE visitId = 1501570398
+LIMIT 10
+
+Task 7. Lab question: STRUCT()
+
+#standardSQL
+SELECT COUNT(p.name) AS racer_count
+FROM racing.race_results AS r, UNNEST(r.participants) AS p
+
+Task 8. Lab question: Unpacking arrays with UNNEST( )
+
+#You will need to unpack both the struct and the array within the struct as data sources after your FROM clause.
+
+#standardSQL
+SELECT
+  p.name,
+  SUM(split_times) as total_race_time
+FROM racing.race_results AS r
+, UNNEST(r.participants) AS p
+, UNNEST(p.splits) AS split_times
+WHERE p.name LIKE 'R%'
+GROUP BY p.name
+ORDER BY total_race_time ASC;
+
+Task 9. Filtering within array values
+
+#standardSQL
+SELECT
+  p.name,
+  split_time
+FROM racing.race_results AS r
+, UNNEST(r.participants) AS p
+, UNNEST(p.splits) AS split_time
+WHERE split_time = 23.2;
